@@ -40,7 +40,7 @@ dl-3rd-assignment/
 │   ├── report.docx
 │   └── report.pdf
 ├──  README.md
-└──requirement.txt
+└──  requirement.txt
 ```
 
 ---
