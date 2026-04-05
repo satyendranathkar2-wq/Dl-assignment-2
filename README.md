@@ -114,7 +114,7 @@ Our experiments demonstrate the classic accuracy-efficiency trade-off. By adjust
 ---
 
 ## 📜 References
-* **ChatGPT / Claude:**— used for code assistance and debugging
+* **ChatGPT / Claude:**— used for code assistance and report writing
 * **Huang et al. (2018):** [Multi-Scale Dense Networks for Resource Efficient Image Classification](https://arxiv.org/abs/1703.09844). *ICLR*.
 
 ---
