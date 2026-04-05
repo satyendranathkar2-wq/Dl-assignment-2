@@ -1,242 +1,120 @@
 # MSDNet: Multi-Scale Dense Network
 
-An implementation and evaluation of **MSDNet** for efficient image classification with early-exit inference — featuring a custom scratch implementation alongside an official-style reference, with full budgeted batch evaluation and FLOPs analysis.
+[![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-\---
+An implementation and evaluation of **MSDNet** (Multi-Scale Dense Network) for efficient image classification. This repository features a **custom scratch implementation** compared against an **official-style reference**, focusing on anytime prediction and budgeted batch classification.
 
-## Overview
 
-Deep neural networks often require large computational budgets during inference. Yet not all samples need the same amount of computation — easy samples can be classified correctly with shallow layers, while harder ones require deeper processing.
 
-**MSDNet** addresses this by combining:
+---
 
-* **Multi-scale feature maps** — fine scales preserve local detail; coarse scales provide larger receptive fields and semantic information for early classifiers
-* **Dense connectivity** (inspired by DenseNet) — for feature reuse, improved gradient flow, and parameter efficiency
-* **Intermediate classifiers (early exits)** — if confidence at an early exit is high enough, prediction is returned immediately; otherwise the sample continues deeper
+## 📖 Overview
 
-This enables two key inference modes:
+Deep neural networks often require massive computational budgets. However, not all samples are equally difficult; "easy" samples can be classified by shallow layers, while "hard" samples require deeper processing.
 
-|Mode|Description|
-|-|-|
-|**Anytime Prediction**|Output a prediction even if inference is interrupted — useful when time is uncertain or constrained|
-|**Budgeted Batch Classification**|Easier samples exit early; harder ones use more compute — main practical strength of MSDNet|
+**MSDNet** solves this by integrating three core concepts:
+1.  **Multi-scale feature maps:** Fine scales preserve local detail, while coarse scales provide semantic information early on.
+2.  **Dense connectivity:** Inspired by DenseNet, this ensures maximum feature reuse and stable gradient flow.
+3.  **Early-exit classifiers:** Intermediate classifiers allow "easy" samples to exit the network early, saving computation.
 
-\---
+### Inference Modes
+* **Anytime Prediction:** The model can be interrupted at any time and return its most recent (best) prediction.
+* **Budgeted Batch Classification:** Samples exit early based on a confidence threshold, optimizing the accuracy-to-compute ratio.
 
-## Repository Structure
+---
 
-```
+## 📂 Repository Structure
+
+```text
 dl-3rd-assignment/
-
-│
-
-├── README.md
-
-├── requirements.txt
-
-│
-
-├── official\\\_msd/
-
-│   ├── official\\\_msdnet\\\_implementation.ipynb
-
-│   ├── official\\\_msdnet\\\_best.pth
-
-│   └── picture\\\_file/
-
-│       ├── training\\\_curves.png
-
-│       ├── validation\\\_curves.png
-
-|	├──test\\\_result.png
-
-│       ├── budget\\\_results.png
-
-│       └── anytime\\\_results.png
-
-│
-
-├── scratch\\\_msd/
-
-│   ├── scratch\\\_msdnet\\\_implementation.ipynb
-
-│   ├── scratch\\\_msdnet\\\_best.pth
-
-│   └── picture\\\_file/
-
-│       ├── training\\\_curves.png
-
-│       ├── validation\\\_curves.png
-
-|	├──test\\\_result.png
-
-│       ├── budget\\\_results.png
-
-│       └── anytime\\\_results.png
-
-└── report/
-
-\&#x20;   ├── report.pdf
-
-\&#x20;   └── report.docx---
-
-## Architecture
-
-### 1\\. Multi-Scale Feature Maps
-
-Unlike standard CNNs with a single spatial resolution stream, MSDNet maintains multiple scales simultaneously throughout the network. This is critical because early classifiers benefit from coarser, semantically richer features even at shallow depths.
-
-### 2\\. Dense Connectivity
-
-Each layer receives feature maps from all preceding layers at the same scale. Benefits include:
-
-\* Feature reuse across depths
-\* Stronger gradient flow during training
-\* Better parameter efficiency
-
-### 3\\. Early-Exit Classifiers
-
-Intermediate classifiers are attached at multiple depths. During inference:
-
-\* If confidence ≥ threshold → return prediction immediately
-\* Otherwise → pass sample to the next block
-
-\\---
-
-## Implementation Details
-
-The scratch implementation builds all core components from the ground up:
-
-\* Multi-scale convolutional blocks
-\* Scale transitions between blocks
-\* Dense feature concatenation
-\* Intermediate and final classifiers
-\* Early-exit logic with confidence thresholding
-\* Budget-based evaluation pipeline
-
-This is then compared against an official/reference MSDNet implementation to validate correctness and efficiency.
-
-\\---
-
-## Training Setup
-
-|Component|Details|
-|-|-|
-|Loss|Cross-entropy with label smoothing|
-|Schedule|Cosine annealing learning rate|
-|Supervision|Multi-exit (each classifier contributes)|
-|Monitoring|Validation accuracy per exit|
-
-Each exit classifier receives independent supervision, allowing the model to produce useful predictions even at intermediate depths.
-
-\\---
-
-## Evaluation Metrics
-
-\* \*\*Top-1 Accuracy\*\* — per exit and overall
-\* \*\*Average FLOPs\*\* — computational cost per sample
-\* \*\*Exit Distribution\*\* — fraction of samples exiting at each depth
-\* \*\*Confidence Threshold Sensitivity\*\* — how threshold affects accuracy/FLOPs trade-off
-\* \*\*Accuracy vs Computational Budget\*\* — the primary evaluation curve
-
-\\---
-
-## Results
-
-The experiments confirm the expected MSDNet behaviour:
-
+├── official_msd/           # Official-style reference implementation
+│   ├── official_msdnet_implementation.ipynb
+│   ├── official_msdnet_best.pth
+│   └── picture_file/       # Training and evaluation plots
+├── scratch_msd/            # Custom implementation from the ground up
+│   ├── scratch_msdnet_implementation.ipynb
+│   ├── scratch_msdnet_best.pth
+│   └── picture_file/       # Results for the scratch version
+├── report/                 # Detailed project documentation
+│   ├── report.docx
+│   └── report.pdf
+├──  README.md
+└──requirement.txt
 ```
 
-Lower threshold  →  more early exits  →  lower FLOPs  →  slightly reduced accuracy
-Higher threshold →  fewer early exits  →  higher FLOPs  →  better accuracy
+---
 
-```
+## 🏗️ Architecture & Implementation
 
-The scratch implementation successfully captures the core MSDNet principles. The official implementation achieves slightly better FLOPs efficiency and accuracy under the same budget — confirming that the architectural design is correct even if not fully optimized.
+### 1. Multi-Scale Strategy
+Unlike standard CNNs, MSDNet maintains multiple spatial resolutions simultaneously. This allows even the earliest classifiers to access coarse, high-level features.
 
-\\---
+### 2. Dense Connectivity
+Each layer receives input from all preceding layers at the same scale, promoting feature reuse and parameter efficiency.
 
-## What Worked
+### 3. Early-Exit Logic
+During inference, if the Softmax confidence at an intermediate exit exceeds a threshold ($H$), the prediction is returned immediately:
+$$\text{Confidence}(x) = \max \text{Softmax}(f_i(x)) \ge H$$
 
-\* Multi-scale architecture constructed and verified
-\* Dense connections propagated features correctly across blocks
-\* Training converged stably with cosine LR schedule
-\* Early-exit inference behaved as expected under confidence gating
-\* Budgeted evaluation demonstrated meaningful dynamic behaviour
+---
 
-## Limitations
+## 🚀 Getting Started
 
-\* Scratch implementation is not fully optimized for wall-clock speed
-\* FLOP efficiency is lower than the official reference
-\* Hyperparameter tuning (especially threshold calibration) can further improve performance
-\* Large-scale datasets may surface additional optimization gaps
+### Prerequisites
+* Python 3.x
+* PyTorch & Torchvision
+* NumPy, Matplotlib, Jupyter
 
-\\---
-
-## Future Work
-
-\* Better confidence threshold calibration strategies
-\* More efficient dense block design
-\* Knowledge distillation between exit classifiers
-\* Improved loss balancing across multiple exits
-\* Evaluation on CIFAR-100, Tiny ImageNet
-\* Deployment benchmarking on edge devices
-
-\\---
-
-## Getting Started
-
-### 1\\. Clone the repository
-
+### Installation
 ```bash
 git clone https://github.com/your-username/msdnet-project.git
 cd msdnet-project
+pip install -r requirements.txt
 ```
 
-### 2\. Install dependencies
+### Usage
+Launch Jupyter and explore the implementations:
+* **Scratch Performance:** `scratch_msd/scratch_msdnet_implementation.ipynb`
+* **Official Performance:** `official_msd/official_msdnet_implementation.ipynb`
 
-```bash
-pip install torch torchvision matplotlib numpy jupyter
-```
+---
 
-### 3\. Launch Jupyter
+## 📊 Results & Evaluation
 
-```bash
-jupyter notebook
-```
+Our experiments demonstrate the classic accuracy-efficiency trade-off. By adjusting the confidence threshold, we can navigate the Pareto front between FLOPs and Top-1 Accuracy.
 
-### 4\. Open a notebook
+| Metric | Scratch Implementation | Official Reference |
+| :--- | :---: | :---: |
+| **Training Stability** | Stable (Cosine LR) | Stable (Cosine LR) |
+| **Early-Exit Behavior** | Functional | Optimized |
+| **FLOP Efficiency** | Moderate | High |
 
-|Notebook|Purpose|
-|-|-|
-|`MSDNet\\\_Commented\\\_CodeCells.ipynb`|scratch architecture performence|
-|`official msd nate implimentation.ipynb`|official architecture performence|
+> [!TIP]
+> **Key Observation:** Lower thresholds lead to more early exits and lower FLOPs, while higher thresholds prioritize accuracy at the cost of computation.
 
-\---
+---
 
-## Dependencies
+## 🛠️ Training Setup
 
-* Python 3.x
-* PyTorch
-* Torchvision
-* NumPy
-* Matplotlib
-* Jupyter Notebook
+| Component | Details |
+| :--- | :--- |
+| **Loss Function** | Cross-entropy with Label Smoothing |
+| **Optimizer** | SGD with Cosine Annealing |
+| **Supervision** | Multi-exit (Independent loss per classifier) |
+| **Metrics** | FLOPs per sample, Exit Distribution, Top-1 Accuracy |
 
-\---
+---
 
-## Applications
+## 🔮 Future Work
+* **Distillation:** Implementing knowledge distillation between deep and shallow exits.
+* **Dynamic Thresholding:** Automatically calibrating thresholds based on a target FLOP budget.
+* **Edge Deployment:** Benchmarking on mobile hardware (e.g., CoreML or ONNX).
 
-MSDNet is especially suited for resource-constrained settings:
+---
 
-* Mobile and edge inference
-* Real-time image classification
-* Adaptive cloud inference pipelines
-* Any scenario where not all samples require the same compute budget
+## 📜 References
+* **Huang et al. (2018):** [Multi-Scale Dense Networks for Resource Efficient Image Classification](https://arxiv.org/abs/1703.09844). *ICLR*.
 
-\---
-
-## References
-
-* [Multi-Scale Dense Networks for Resource Efficient Image Classification](https://arxiv.org/abs/1703.09844) — Huang et al., ICLR 2018
-
+---
+*Created for the Deep Learning 3rd Assignment.*
